@@ -12,15 +12,20 @@ pub mod user_controller;
 pub struct Error {
     message: String,
     status: u16,
+    field: Option<String>,
 }
 
 impl Error {
-    fn new(message: String, status: u16) -> Self {
-        Self { message, status }
+    fn new(message: String, status: u16, field: Option<String>) -> Self {
+        Self {
+            message,
+            status,
+            field,
+        }
     }
 
     fn error(error: service::Error) -> Self {
-        Self::new(error.message, error.status)
+        Self::new(error.message, error.status, error.field)
     }
 }
 
@@ -31,7 +36,11 @@ impl ResponseError for Error {
 
     fn error_response(&self) -> HttpResponse<BoxBody> {
         let code = StatusCode::from_u16(self.status).unwrap();
-        HttpResponse::build(code).json(ErrorResponse::new(self.status, self.message.clone()))
+        HttpResponse::build(code).json(ErrorResponse::new(
+            self.status,
+            self.message.clone(),
+            self.field.clone(),
+        ))
     }
 }
 

@@ -1,6 +1,0 @@
-@base=http://localhost:4001
-@id=a89ce7ba-bd53-40cf-9021-71417e578df2
-
-GET {{base}}/users
-###
-GET {{base}}/users/{{id}}

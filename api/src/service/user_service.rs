@@ -1,4 +1,4 @@
-use crate::{model::User, repository::UserRepository};
+use crate::{http::UserRequest, model::User, repository::UserRepository};
 
 #[derive(Debug, Clone)]
 pub struct UserService {
@@ -26,5 +26,36 @@ impl UserService {
             Ok(None) => Err(super::Error::not_found()),
             Err(error) => Err(super::Error::sqlx_error(error)),
         }
+    }
+
+    pub async fn find_by_username_or_email(
+        &self,
+        username: &str,
+        email: &str,
+    ) -> Result<User, super::Error> {
+        match self.repo.find_by_username_or_email(username, email).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(super::Error::not_found()),
+            Err(error) => Err(super::Error::sqlx_error(error)),
+        }
+    }
+
+    pub async fn create(&self, request: UserRequest) -> Result<User, super::Error> {
+        request.validate()?;
+        let data = User::new_from(request)?;
+        self.repo
+            .create(&data)
+            .await
+            .map_err(super::Error::sqlx_error)
+    }
+
+    pub async fn update(&self, id: uuid::Uuid, request: UserRequest) -> Result<User, super::Error> {
+        request.validate()?;
+        let mut data = self.find_by_id(id).await?;
+        data.update_from(request)?;
+        self.repo
+            .update(&data)
+            .await
+            .map_err(super::Error::sqlx_error)
     }
 }

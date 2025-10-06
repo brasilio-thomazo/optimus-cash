@@ -6,6 +6,7 @@ mod controller;
 mod http;
 mod model;
 mod repository;
+mod security;
 mod service;
 
 #[actix_web::main]
@@ -30,7 +31,7 @@ async fn http(pool: sqlx::PgPool) -> Result<(), std::io::Error> {
             user_controller::init(cfg, pool.clone());
         })
     })
-    .bind("0.0.0.0:4001")
+    .bind("0.0.0.0:4000")
     .unwrap()
     .run()
     .await

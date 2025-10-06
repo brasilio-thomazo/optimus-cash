@@ -33,4 +33,56 @@ impl UserRepository {
 
         sqlx::query_as(sql).bind(id).fetch_optional(&self.db).await
     }
+
+    pub async fn find_by_username_or_email(
+        &self,
+        username: &str,
+        email: &str,
+    ) -> Result<Option<User>, sqlx::Error> {
+        let sql = r#"SELECT *
+            FROM users
+            WHERE username = $1 OR email = $2 AND deleted_at IS NULL"#;
+
+        sqlx::query_as(sql)
+            .bind(username)
+            .bind(email)
+            .fetch_optional(&self.db)
+            .await
+    }
+
+    pub async fn create(&self, user: &User) -> Result<User, sqlx::Error> {
+        let sql = r#"INSERT INTO users (id, name, phone, email, username, hash, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *"#;
+
+        sqlx::query_as(sql)
+            .bind(user.id)
+            .bind(&user.name)
+            .bind(&user.phone)
+            .bind(&user.username)
+            .bind(&user.email)
+            .bind(&user.hash)
+            .bind(&user.created_at)
+            .bind(&user.updated_at)
+            .fetch_one(&self.db)
+            .await
+    }
+
+    pub async fn update(&self, user: &User) -> Result<User, sqlx::Error> {
+        let sql = r#"UPDATE users
+            SET name = $1, phone = $2, email = $3, username = $4, hash = $5, updated_at = $6
+            WHERE id = $7
+            RETURNING *"#;
+
+        sqlx::query_as(sql)
+            .bind(&user.name)
+            .bind(&user.phone)
+            .bind(&user.username)
+            .bind(&user.email)
+            .bind(&user.hash)
+            .bind(&user.updated_at)
+            .bind(&user.id)
+            .fetch_one(&self.db)
+            .await
+    }
 }

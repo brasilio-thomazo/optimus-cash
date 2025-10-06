@@ -1,16 +1,18 @@
 use actix_web::{
     HttpResponse, Responder,
-    web::{Data, Path, ServiceConfig, get, scope},
+    web::{Data, Json, Path, ServiceConfig, get, post, put, scope},
 };
 
-use crate::service::UserService;
+use crate::{http::UserRequest, service::UserService};
 
 pub fn init(cfg: &mut ServiceConfig, pool: sqlx::PgPool) {
     let service = Data::new(UserService::new(pool));
     cfg.service(
         scope("/users")
             .route("", get().to(index))
-            .route("/{id}", get().to(show)),
+            .route("/{id}", get().to(show))
+            .route("", post().to(create))
+            .route("/{id}", put().to(update)),
     )
     .app_data(service);
 }
@@ -27,6 +29,27 @@ pub async fn show(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Resp
     let id = id.into_inner();
     service
         .find_by_id(id)
+        .await
+        .map(|data| HttpResponse::Ok().json(data))
+        .map_err(super::Error::error)
+}
+
+pub async fn create(service: Data<UserService>, request: Json<UserRequest>) -> impl Responder {
+    service
+        .create(request.into_inner())
+        .await
+        .map(|data| HttpResponse::Created().json(data))
+        .map_err(super::Error::error)
+}
+
+pub async fn update(
+    service: Data<UserService>,
+    id: Path<uuid::Uuid>,
+    request: Json<UserRequest>,
+) -> impl Responder {
+    let id = id.into_inner();
+    service
+        .update(id, request.into_inner())
         .await
         .map(|data| HttpResponse::Ok().json(data))
         .map_err(super::Error::error)
