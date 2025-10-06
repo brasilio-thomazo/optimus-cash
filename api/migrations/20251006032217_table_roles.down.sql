@@ -1,1 +1,3 @@
+DROP TYPE IF EXISTS role_method;
+
 DROP TABLE IF EXISTS roles;
