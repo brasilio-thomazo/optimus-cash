@@ -1,0 +1,11 @@
+[package]
+name = "api-rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4.11.0"
+dotenvy = "0.15.7"
+serde = { version = "1.0.228", features = ["derive"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-native-tls", "derive", "postgres", "macros", "uuid", "json"] }
+uuid = { version = "1.18.1", features = ["serde"] }
