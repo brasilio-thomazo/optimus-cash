@@ -6,6 +6,8 @@ use std::fmt;
 use crate::http::ErrorResponse;
 use crate::service;
 
+pub mod auth_controller;
+pub mod profile_controller;
 pub mod user_controller;
 
 #[derive(Debug)]

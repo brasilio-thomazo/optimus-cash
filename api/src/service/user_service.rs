@@ -28,18 +28,6 @@ impl UserService {
         }
     }
 
-    pub async fn find_by_username_or_email(
-        &self,
-        username: &str,
-        email: &str,
-    ) -> Result<User, super::Error> {
-        match self.repo.find_by_username_or_email(username, email).await {
-            Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(super::Error::not_found()),
-            Err(error) => Err(super::Error::sqlx_error(error)),
-        }
-    }
-
     pub async fn create(&self, request: UserRequest) -> Result<User, super::Error> {
         request.validate()?;
         let data = User::new_from(request)?;
@@ -55,6 +43,27 @@ impl UserService {
         data.update_from(request)?;
         self.repo
             .update(&data)
+            .await
+            .map_err(super::Error::sqlx_error)
+    }
+
+    pub async fn soft_delete(&self, id: uuid::Uuid) -> Result<User, super::Error> {
+        self.repo
+            .soft_delete(id)
+            .await
+            .map_err(super::Error::sqlx_error)
+    }
+
+    pub async fn hard_delete(&self, id: uuid::Uuid) -> Result<(), super::Error> {
+        self.repo
+            .hard_delete(id)
+            .await
+            .map_err(super::Error::sqlx_error)
+    }
+
+    pub async fn undelete(&self, id: uuid::Uuid) -> Result<User, super::Error> {
+        self.repo
+            .undelete(id)
             .await
             .map_err(super::Error::sqlx_error)
     }

@@ -34,18 +34,13 @@ impl UserRepository {
         sqlx::query_as(sql).bind(id).fetch_optional(&self.db).await
     }
 
-    pub async fn find_by_username_or_email(
-        &self,
-        username: &str,
-        email: &str,
-    ) -> Result<Option<User>, sqlx::Error> {
+    pub async fn find_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
         let sql = r#"SELECT *
             FROM users
-            WHERE username = $1 OR email = $2 AND deleted_at IS NULL"#;
+            WHERE username = $1 OR email = $1 AND deleted_at IS NULL"#;
 
         sqlx::query_as(sql)
             .bind(username)
-            .bind(email)
             .fetch_optional(&self.db)
             .await
     }
@@ -59,8 +54,8 @@ impl UserRepository {
             .bind(user.id)
             .bind(&user.name)
             .bind(&user.phone)
-            .bind(&user.username)
             .bind(&user.email)
+            .bind(&user.username)
             .bind(&user.hash)
             .bind(&user.created_at)
             .bind(&user.updated_at)
@@ -84,5 +79,34 @@ impl UserRepository {
             .bind(&user.id)
             .fetch_one(&self.db)
             .await
+    }
+
+    pub async fn soft_delete(&self, id: uuid::Uuid) -> Result<User, sqlx::Error> {
+        let sql = r#"UPDATE users
+            SET deleted_at = $1
+            WHERE id = $2
+            RETURNING *"#;
+
+        sqlx::query_as(sql)
+            .bind(chrono::Utc::now().timestamp())
+            .bind(id)
+            .fetch_one(&self.db)
+            .await
+    }
+
+    pub async fn hard_delete(&self, id: uuid::Uuid) -> Result<(), sqlx::Error> {
+        let sql = r#"DELETE FROM users
+            WHERE id = $1 AND deleted_at IS NOT NULL"#;
+        sqlx::query(sql).bind(id).execute(&self.db).await?;
+        Ok(())
+    }
+
+    pub async fn undelete(&self, id: uuid::Uuid) -> Result<User, sqlx::Error> {
+        let sql = r#"UPDATE users
+            SET deleted_at = NULL
+            WHERE id = $1 AND deleted_at IS NOT NULL
+            RETURNING *"#;
+
+        sqlx::query_as(sql).bind(id).fetch_one(&self.db).await
     }
 }

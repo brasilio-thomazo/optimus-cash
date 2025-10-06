@@ -1,5 +1,5 @@
 @base=http://localhost:4000
-@id=a89ce7ba-bd53-40cf-9021-71417e578df2
+@id=98588ec5-093f-4097-b901-6bcf5e2ef68f
 
 ### show all users
 GET {{base}}/users
