@@ -46,8 +46,8 @@ impl UserRepository {
     }
 
     pub async fn create(&self, user: &User) -> Result<User, sqlx::Error> {
-        let sql = r#"INSERT INTO users (id, name, phone, email, username, hash, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        let sql = r#"INSERT INTO users (id, name, phone, email, username, hash, is_admin, is_verified, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *"#;
 
         sqlx::query_as(sql)
@@ -57,6 +57,8 @@ impl UserRepository {
             .bind(&user.email)
             .bind(&user.username)
             .bind(&user.hash)
+            .bind(user.is_admin)
+            .bind(user.is_verified)
             .bind(&user.created_at)
             .bind(&user.updated_at)
             .fetch_one(&self.db)
