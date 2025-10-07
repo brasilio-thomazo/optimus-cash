@@ -1,0 +1,51 @@
+services:
+  api-1:
+    build:
+      context: api
+      dockerfile: Dockerfile
+    container_name: api-1
+    volumes:
+      - ./private.pem:/app/private.pem
+      - ./public.pem:/app/public.pem
+    environment:
+      - JWT_PRIVATE_KEY_PATH=/app/private.pem
+      - JWT_PUBLIC_KEY_PATH=/app/public.pem
+      - DATABASE_URL=postgres://postgres:postgres@db/cash
+    depends_on:
+      - db
+
+  api-2:
+    build:
+      context: api
+      dockerfile: Dockerfile
+    container_name: api-2
+    volumes:
+      - ./private.pem:/app/private.pem
+      - ./public.pem:/app/public.pem
+    environment:
+      - JWT_PRIVATE_KEY_PATH=/app/private.pem
+      - JWT_PUBLIC_KEY_PATH=/app/public.pem
+      - DATABASE_URL=postgres://postgres:postgres@db/cash
+    depends_on:
+      - db
+
+  db:
+    image: postgres:alpine
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cash
+  
+  haproxy:
+    build:
+      context: haproxy
+      dockerfile: Dockerfile
+    container_name: haproxy
+    ports:
+      - "80:80"
+    environment:
+      - SERVICES=api-1,api-2
+    depends_on:
+      - api-1
+      - api-2

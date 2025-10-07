@@ -11,4 +11,6 @@ dotenvy = "0.15.7"
 jsonwebtoken = { version = "10.0.0", features = ["rust_crypto"] }
 serde = { version = "1.0.228", features = ["derive"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-native-tls", "derive", "postgres", "macros", "uuid", "json"] }
+tracing = { version = "0.1.41", features = ["log"] }
+tracing-subscriber = { version = "0.3.20", features = ["chrono", "regex", "serde", "env-filter", "tracing"] }
 uuid = { version = "1.18.1", features = ["serde", "v4"] }
