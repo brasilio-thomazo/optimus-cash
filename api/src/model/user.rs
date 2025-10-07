@@ -1,4 +1,4 @@
-use crate::{http::UserRequest, security::hash::hash, service};
+use crate::{error, http::UserRequest, security::hash::hash};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -20,9 +20,9 @@ pub struct User {
 }
 
 impl User {
-    pub fn new_from(req: UserRequest) -> Result<Self, service::Error> {
+    pub fn new_from(req: UserRequest) -> Result<Self, error::Error> {
         let id = Uuid::new_v4();
-        let hash = hash(&req.password).map_err(service::Error::bcrypt_error)?;
+        let hash = hash(&req.password)?;
         let now = chrono::Utc::now();
         let timestamp = now.timestamp();
 
@@ -41,10 +41,10 @@ impl User {
         })
     }
 
-    pub fn update_from(&mut self, req: UserRequest) -> Result<(), service::Error> {
+    pub fn update_from(&mut self, req: UserRequest) -> Result<(), error::Error> {
         let now = chrono::Utc::now();
         let timestamp = now.timestamp();
-        let hash = hash(&req.password).map_err(service::Error::bcrypt_error)?;
+        let hash = hash(&req.password)?;
 
         self.name = req.name;
         self.phone = req.phone;

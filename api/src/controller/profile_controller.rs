@@ -18,5 +18,4 @@ pub async fn index(srv: web::Data<ProfileService>, claims: web::ReqData<Claims>)
     srv.get_profile(id)
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }

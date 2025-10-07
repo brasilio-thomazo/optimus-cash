@@ -4,6 +4,7 @@ use clap::Parser;
 use crate::controller::{auth_controller, health_controller, profile_controller, user_controller};
 
 mod controller;
+mod error;
 mod http;
 mod middleware;
 mod model;
@@ -99,16 +100,24 @@ async fn database() -> sqlx::PgPool {
 
 async fn http(pool: sqlx::PgPool) -> Result<(), std::io::Error> {
     tracing::info!("starting http server on 0.0.0.0:4000");
+
     HttpServer::new(move || {
-        actix_web::App::new().configure(|cfg| {
-            user_controller::init(cfg, pool.clone());
-            auth_controller::init(cfg, pool.clone());
-            profile_controller::init(cfg, pool.clone());
-            health_controller::init(cfg);
-        })
+        let cors = actix_cors::Cors::default()
+            .allowed_origin("http://localhost:5173")
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_headers(vec!["Content-Type", "Authorization"])
+            .max_age(3600);
+
+        actix_web::App::new()
+            .configure(|cfg| {
+                user_controller::init(cfg, pool.clone());
+                auth_controller::init(cfg, pool.clone());
+                profile_controller::init(cfg, pool.clone());
+                health_controller::init(cfg);
+            })
+            .wrap(cors)
     })
-    .bind("0.0.0.0:4000")
-    .unwrap()
+    .bind(("0.0.0.0", 4000))?
     .run()
     .await
 }

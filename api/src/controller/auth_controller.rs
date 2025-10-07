@@ -13,5 +13,4 @@ pub async fn auth(service: web::Data<AuthService>, req: web::Json<AuthRequest>) 
         .auth(req.into_inner())
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }

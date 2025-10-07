@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::service;
+use crate::error;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UserRequest {
@@ -13,31 +13,31 @@ pub struct UserRequest {
 }
 
 impl UserRequest {
-    pub fn validate(&self) -> Result<(), service::Error> {
+    pub fn validate(&self) -> Result<(), error::Error> {
         if self.name.is_empty() {
-            return Err(service::Error::bad_request("name is required", "name"));
+            return Err(error::Error::bad_request("name is required", "name"));
         }
 
         if self.email.is_empty() {
-            return Err(service::Error::bad_request("email is required", "email"));
+            return Err(error::Error::bad_request("email is required", "email"));
         }
 
         if self.username.is_empty() {
-            return Err(service::Error::bad_request(
+            return Err(error::Error::bad_request(
                 "username is required",
                 "username",
             ));
         }
 
         if self.password.is_empty() {
-            return Err(service::Error::bad_request(
+            return Err(error::Error::bad_request(
                 "password is required",
                 "password",
             ));
         }
 
         if self.password != self.password_confirmation {
-            return Err(service::Error::bad_request(
+            return Err(error::Error::bad_request(
                 "password does not match",
                 "password_confirmation",
             ));

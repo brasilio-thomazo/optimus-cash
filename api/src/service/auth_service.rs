@@ -1,4 +1,5 @@
 use crate::{
+    error,
     http::{AuthRequest, AuthResponse},
     repository::UserRepository,
     security,
@@ -16,7 +17,7 @@ impl AuthService {
         }
     }
 
-    pub async fn auth(&self, req: AuthRequest) -> Result<AuthResponse, super::Error> {
+    pub async fn auth(&self, req: AuthRequest) -> Result<AuthResponse, error::Error> {
         req.validate()?;
         match self.repo.find_by_username(&req.username).await {
             Ok(Some(data)) => match security::hash::verify(&req.password, &data.hash) {
@@ -24,11 +25,11 @@ impl AuthService {
                     let token = security::jwt::generate(data.clone())?;
                     Ok(AuthResponse::new(token, data))
                 }
-                Ok(false) => Err(super::Error::unauthorized()),
-                Err(error) => Err(super::Error::bcrypt_error(error)),
+                Ok(false) => Err(error::Error::unauthorized()),
+                Err(err) => Err(err),
             },
-            Ok(None) => Err(super::Error::unauthorized()),
-            Err(error) => Err(super::Error::sqlx_error(error)),
+            Ok(None) => Err(error::Error::unauthorized()),
+            Err(error) => Err(error::Error::sqlx_error(error)),
         }
     }
 }

@@ -25,7 +25,6 @@ pub async fn index(service: Data<UserService>) -> impl Responder {
         .find_all(None)
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }
 
 pub async fn show(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Responder {
@@ -34,7 +33,6 @@ pub async fn show(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Resp
         .find_by_id(id)
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }
 
 pub async fn create(service: Data<UserService>, request: Json<UserRequest>) -> impl Responder {
@@ -42,7 +40,6 @@ pub async fn create(service: Data<UserService>, request: Json<UserRequest>) -> i
         .create(request.into_inner())
         .await
         .map(|data| HttpResponse::Created().json(data))
-        .map_err(super::Error::error)
 }
 
 pub async fn update(
@@ -55,7 +52,6 @@ pub async fn update(
         .update(id, request.into_inner())
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }
 
 pub async fn soft_delete(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Responder {
@@ -64,7 +60,6 @@ pub async fn soft_delete(service: Data<UserService>, id: Path<uuid::Uuid>) -> im
         .soft_delete(id)
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }
 
 pub async fn hard_delete(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Responder {
@@ -73,7 +68,6 @@ pub async fn hard_delete(service: Data<UserService>, id: Path<uuid::Uuid>) -> im
         .hard_delete(id)
         .await
         .map(|_| HttpResponse::NoContent().finish())
-        .map_err(super::Error::error)
 }
 
 pub async fn undelete(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl Responder {
@@ -82,5 +76,4 @@ pub async fn undelete(service: Data<UserService>, id: Path<uuid::Uuid>) -> impl 
         .undelete(id)
         .await
         .map(|data| HttpResponse::Ok().json(data))
-        .map_err(super::Error::error)
 }
