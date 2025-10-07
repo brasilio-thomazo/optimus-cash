@@ -4,10 +4,9 @@ RUN apt update && apt install -y pkg-config libssl-dev build-essential \
 
 WORKDIR /app
 COPY . .
-RUN cargo build --release
+RUN cargo build --release -j $(nproc)
 
 FROM debian:stable-slim
-WORKDIR /app
-COPY --from=builder /app/target/release/api-rust .
+COPY --from=builder /app/target/release/api-rust /usr/bin/api
 EXPOSE 4000
-CMD ["./api-rust"]
+CMD ["api", "server"]

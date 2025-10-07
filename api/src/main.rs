@@ -1,4 +1,5 @@
 use actix_web::HttpServer;
+use clap::Parser;
 
 use crate::controller::{auth_controller, health_controller, profile_controller, user_controller};
 
@@ -10,6 +11,20 @@ mod repository;
 mod security;
 mod service;
 
+#[derive(Debug, clap::Parser)]
+#[command(name = "api")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum Commands {
+    Server,
+    Migrate,
+    Seed,
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt()
@@ -19,9 +34,58 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     dotenvy::dotenv().ok();
+    let cli = Cli::parse();
     let pool = database().await;
-    init(pool.clone()).await;
-    http(pool).await
+
+    match &cli.command {
+        Commands::Server => http(pool.clone()).await,
+        Commands::Migrate => migrate(pool.clone()).await,
+        Commands::Seed => seed(pool.clone()).await,
+    }
+}
+
+async fn migrate(pool: sqlx::PgPool) -> Result<(), std::io::Error> {
+    match sqlx::migrate!().run(&pool.clone()).await {
+        Ok(_) => {
+            tracing::info!("database migrated");
+        }
+        Err(err) => {
+            tracing::error!("failed to migrate database: {}", err);
+        }
+    }
+
+    Ok(())
+}
+
+async fn seed(pool: sqlx::PgPool) -> Result<(), std::io::Error> {
+    let user_repo = crate::repository::UserRepository::new(pool);
+    let now = chrono::Utc::now().timestamp();
+
+    tracing::info!("creating admin user");
+    let admin = crate::model::User {
+        id: uuid::Uuid::new_v4(),
+        name: "admin".to_string(),
+        email: "postmaster@localhost".to_string(),
+        phone: "".to_string(),
+        username: "admin".to_string(),
+        is_admin: true,
+        is_verified: true,
+        hash: security::hash::hash("admin").unwrap(),
+        created_at: now,
+        updated_at: now,
+        deleted_at: None,
+    };
+
+    match user_repo.create(&admin).await {
+        Ok(_) => {
+            tracing::info!("admin user created");
+        }
+        Err(err) => {
+            tracing::error!("failed to create admin user: {}", err);
+        }
+    }
+
+    Ok(())
 }
 
 async fn database() -> sqlx::PgPool {
@@ -33,46 +97,8 @@ async fn database() -> sqlx::PgPool {
         .unwrap()
 }
 
-async fn init(pool: sqlx::PgPool) {
-    match sqlx::migrate!().run(&pool.clone()).await {
-        Ok(_) => {
-            tracing::info!("database migrated");
-        }
-        Err(err) => {
-            tracing::error!("failed to migrate database: {}", err);
-        }
-    }
-
-    let now = chrono::Utc::now().timestamp();
-    let user_repo = crate::repository::UserRepository::new(pool);
-    if user_repo.find_all(1).await.unwrap().is_empty() {
-        tracing::info!("creating admin user");
-        let admin = crate::model::User {
-            id: uuid::Uuid::new_v4(),
-            name: "admin".to_string(),
-            email: "postmaster@localhost".to_string(),
-            phone: "".to_string(),
-            username: "admin".to_string(),
-            is_admin: true,
-            is_verified: true,
-            hash: security::hash::hash("admin").unwrap(),
-            created_at: now,
-            updated_at: now,
-            deleted_at: None,
-        };
-
-        match user_repo.create(&admin).await {
-            Ok(_) => {
-                tracing::info!("admin user created");
-            }
-            Err(err) => {
-                tracing::error!("failed to create admin user: {}", err);
-            }
-        }
-    }
-}
-
 async fn http(pool: sqlx::PgPool) -> Result<(), std::io::Error> {
+    tracing::info!("starting http server on 0.0.0.0:4000");
     HttpServer::new(move || {
         actix_web::App::new().configure(|cfg| {
             user_controller::init(cfg, pool.clone());
