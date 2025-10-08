@@ -34,7 +34,8 @@ impl UserService {
         self.repo
             .create(&data)
             .await
-            .map_err(app::Error::sqlx_error)
+            .map_err(app::Error::sqlx_error)?;
+        Ok(data)
     }
 
     pub async fn update(&self, id: uuid::Uuid, request: UserRequest) -> Result<User, app::Error> {
@@ -44,10 +45,11 @@ impl UserService {
         self.repo
             .update(&data)
             .await
-            .map_err(app::Error::sqlx_error)
+            .map_err(app::Error::sqlx_error)?;
+        Ok(data)
     }
 
-    pub async fn soft_delete(&self, id: uuid::Uuid) -> Result<User, app::Error> {
+    pub async fn soft_delete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
         self.repo
             .soft_delete(id)
             .await
@@ -61,7 +63,7 @@ impl UserService {
             .map_err(app::Error::sqlx_error)
     }
 
-    pub async fn undelete(&self, id: uuid::Uuid) -> Result<User, app::Error> {
+    pub async fn undelete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
         self.repo.undelete(id).await.map_err(app::Error::sqlx_error)
     }
 }
