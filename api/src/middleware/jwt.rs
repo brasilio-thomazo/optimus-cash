@@ -5,7 +5,7 @@ use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
 };
 
-use crate::security;
+use crate::{config, security};
 
 pub struct JwtMiddleware;
 
@@ -43,6 +43,14 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
+        let open_routes = config::open_routes();
+        if open_routes.contains(&req.path()) {
+            let fut = self.service.call(req);
+            return Box::pin(async move {
+                let res = fut.await?;
+                Ok(res)
+            });
+        }
         let token = req
             .headers()
             .get("Authorization")
@@ -53,7 +61,7 @@ where
             );
         }
         let token = token.unwrap().replace("Bearer ", "");
-        match security::jwt::verify(&token) {
+        match security::verify_jwt_token(&token) {
             Ok(data) => {
                 req.extensions_mut().insert(data.clone());
             }

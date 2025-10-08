@@ -1,4 +1,4 @@
-use crate::{error, model::User};
+use crate::{app, model::User};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Claims {
@@ -8,17 +8,17 @@ pub struct Claims {
     pub exp: i64,
 }
 
-fn read_private_key() -> Result<Vec<u8>, error::Error> {
-    let path = std::env::var("PRIVATE_KEY_PATH").map_err(error::Error::var_error)?;
-    std::fs::read(path).map_err(error::Error::io_error)
+fn read_private_key() -> Result<Vec<u8>, app::Error> {
+    let path = std::env::var("PRIVATE_KEY_PATH").map_err(app::Error::var_error)?;
+    std::fs::read(path).map_err(app::Error::io_error)
 }
 
-fn read_public_key() -> Result<Vec<u8>, error::Error> {
-    let path = std::env::var("PUBLIC_KEY_PATH").map_err(error::Error::var_error)?;
-    std::fs::read(path).map_err(error::Error::io_error)
+fn read_public_key() -> Result<Vec<u8>, app::Error> {
+    let path = std::env::var("PUBLIC_KEY_PATH").map_err(app::Error::var_error)?;
+    std::fs::read(path).map_err(app::Error::io_error)
 }
 
-pub fn generate(data: User) -> Result<String, error::Error> {
+pub fn generate_jwt_token(data: User) -> Result<String, app::Error> {
     let now = chrono::Utc::now().timestamp();
     let exp = now + 60 * 60 * 24; // 1 day
     let claims = Claims {
@@ -30,18 +30,18 @@ pub fn generate(data: User) -> Result<String, error::Error> {
     let header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::EdDSA);
     let private_key = read_private_key()?;
     let key = jsonwebtoken::EncodingKey::from_ed_pem(&private_key.as_slice())
-        .map_err(error::Error::jwt_error)?;
-    jsonwebtoken::encode(&header, &claims, &key).map_err(error::Error::jwt_error)
+        .map_err(app::Error::jwt_error)?;
+    jsonwebtoken::encode(&header, &claims, &key).map_err(app::Error::jwt_error)
 }
 
-pub fn verify(token: &str) -> Result<Claims, error::Error> {
+pub fn verify_jwt_token(token: &str) -> Result<Claims, app::Error> {
     let public_key = read_public_key()?;
     let key = jsonwebtoken::DecodingKey::from_ed_pem(&public_key.as_slice())
-        .map_err(error::Error::jwt_error)?;
+        .map_err(app::Error::jwt_error)?;
     let mut validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::EdDSA);
     validation.set_audience(&["optimus-cash".to_string()]);
 
     jsonwebtoken::decode(token, &key, &validation)
-        .map_err(error::Error::jwt_error)
+        .map_err(app::Error::jwt_error)
         .map(|data| data.claims)
 }

@@ -1,4 +1,4 @@
-use crate::error;
+use crate::app;
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct AuthRequest {
@@ -7,19 +7,13 @@ pub struct AuthRequest {
 }
 
 impl AuthRequest {
-    pub fn validate(&self) -> Result<(), error::Error> {
+    pub fn validate(&self) -> Result<(), app::Error> {
         if self.username.is_empty() {
-            return Err(error::Error::bad_request(
-                "username is required",
-                "username",
-            ));
+            return Err(app::Error::bad_request("username is required", "username"));
         }
 
         if self.password.is_empty() {
-            return Err(error::Error::bad_request(
-                "password is required",
-                "password",
-            ));
+            return Err(app::Error::bad_request("password is required", "password"));
         }
 
         Ok(())

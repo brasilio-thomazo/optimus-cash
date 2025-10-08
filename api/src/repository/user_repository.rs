@@ -1,18 +1,14 @@
-use crate::{
-    model::User,
-    repository::{LIMIT, offset},
-};
+use crate::{db, model::User, repository::repository::Repository};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct UserRepository {
-    db: sqlx::PgPool,
+    db: db::Pool,
 }
 
 impl UserRepository {
-    pub fn new(db: sqlx::PgPool) -> Self {
-        Self { db }
+    pub fn new(db: &db::Pool) -> Self {
+        Self { db: db.clone() }
     }
-
     pub async fn find_all(&self, page: i32) -> Result<Vec<User>, sqlx::Error> {
         let sql = r#"SELECT *
             FROM users
@@ -20,9 +16,9 @@ impl UserRepository {
             LIMIT $1 OFFSET $2"#;
 
         sqlx::query_as(sql)
-            .bind(LIMIT)
-            .bind(offset(page))
-            .fetch_all(&self.db)
+            .bind(self.limit())
+            .bind(self.offset(page))
+            .fetch_all(&self.db.read)
             .await
     }
 
@@ -31,7 +27,10 @@ impl UserRepository {
             FROM users
             WHERE id = $1 AND deleted_at IS NULL"#;
 
-        sqlx::query_as(sql).bind(id).fetch_optional(&self.db).await
+        sqlx::query_as(sql)
+            .bind(id)
+            .fetch_optional(&self.db.read)
+            .await
     }
 
     pub async fn find_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
@@ -41,7 +40,7 @@ impl UserRepository {
 
         sqlx::query_as(sql)
             .bind(username)
-            .fetch_optional(&self.db)
+            .fetch_optional(&self.db.read)
             .await
     }
 
@@ -61,7 +60,7 @@ impl UserRepository {
             .bind(user.is_verified)
             .bind(&user.created_at)
             .bind(&user.updated_at)
-            .fetch_one(&self.db)
+            .fetch_one(&self.db.write)
             .await
     }
 
@@ -79,7 +78,7 @@ impl UserRepository {
             .bind(&user.hash)
             .bind(&user.updated_at)
             .bind(&user.id)
-            .fetch_one(&self.db)
+            .fetch_one(&self.db.write)
             .await
     }
 
@@ -92,14 +91,14 @@ impl UserRepository {
         sqlx::query_as(sql)
             .bind(chrono::Utc::now().timestamp())
             .bind(id)
-            .fetch_one(&self.db)
+            .fetch_one(&self.db.write)
             .await
     }
 
     pub async fn hard_delete(&self, id: uuid::Uuid) -> Result<(), sqlx::Error> {
         let sql = r#"DELETE FROM users
             WHERE id = $1 AND deleted_at IS NOT NULL"#;
-        sqlx::query(sql).bind(id).execute(&self.db).await?;
+        sqlx::query(sql).bind(id).execute(&self.db.write).await?;
         Ok(())
     }
 
@@ -109,6 +108,23 @@ impl UserRepository {
             WHERE id = $1 AND deleted_at IS NOT NULL
             RETURNING *"#;
 
-        sqlx::query_as(sql).bind(id).fetch_one(&self.db).await
+        sqlx::query_as(sql).bind(id).fetch_one(&self.db.write).await
+    }
+
+    pub async fn update_hash(&self, id: &uuid::Uuid, hash: &str) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now().timestamp();
+        let sql = r#"UPDATE users
+            SET hash = $1, updated_at = $2
+            WHERE id = $3"#;
+
+        sqlx::query(sql)
+            .bind(hash)
+            .bind(now)
+            .bind(id)
+            .execute(&self.db.write)
+            .await?;
+        Ok(())
     }
 }
+
+impl Repository for UserRepository {}

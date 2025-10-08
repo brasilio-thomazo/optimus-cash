@@ -27,7 +27,7 @@ impl Error {
         Error::new(err.to_string(), 500, None)
     }
 
-    pub fn parse_error(err: std::num::ParseIntError) -> Error {
+    pub fn parse_error<E: std::fmt::Display>(err: E) -> Error {
         Error::new(err.to_string(), 500, None)
     }
 
@@ -79,7 +79,7 @@ impl actix_web::ResponseError for Error {
 
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         let code = actix_web::http::StatusCode::from_u16(self.status).unwrap();
-        actix_web::HttpResponse::build(code).json(http::ErrorResponse::new(
+        actix_web::HttpResponse::build(code).json(http::response::ErrorResponse::new(
             self.status,
             self.message.clone(),
             self.field.clone(),
