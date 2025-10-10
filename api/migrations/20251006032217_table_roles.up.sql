@@ -20,3 +20,15 @@ CREATE TABLE IF NOT EXISTS
         UNIQUE ("name"),
         UNIQUE (endpoint, "method")
     );
+
+CREATE
+OR REPLACE FUNCTION update_timestamp () RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = EXTRACT(EPOCH FROM NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_timestamp BEFORE
+UPDATE ON roles FOR EACH ROW
+EXECUTE PROCEDURE update_timestamp ();

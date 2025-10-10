@@ -36,5 +36,6 @@ VALUES
             epoch
             FROM
                 NOW()
-        )
+        ) ON CONFLICT (username)
+        DO NOTHING
     );

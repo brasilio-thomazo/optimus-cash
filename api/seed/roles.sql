@@ -22,4 +22,5 @@ VALUES
     ('show branch accout', '/branch-accounts', 'GET'),
     ('edit branch account', '/branch-accounts', 'PUT'),
     ('patch branch account', '/branch-accounts', 'PATCH'),
-    ('delete branch account', '/branch-accounts', 'DELETE');
+    ('delete branch account', '/branch-accounts', 'DELETE') ON CONFLICT ("name", endpoint, "method")
+DO NOTHING;

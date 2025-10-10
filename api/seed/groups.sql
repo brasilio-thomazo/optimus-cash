@@ -43,7 +43,7 @@ VALUES
                     FROM
                         roles
                     WHERE
-                        "name" IN ('show user', 'show group', 'show branch')
+                        "name" IN ('show user', 'show group', 'show branch', 'show branch accout')
                 ) t
         ),
         EXTRACT(
@@ -56,4 +56,5 @@ VALUES
             FROM
                 NOW()
         )
-    );
+    ) ON CONFLICT ("name")
+DO NOTHING;
