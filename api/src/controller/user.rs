@@ -33,24 +33,24 @@ pub async fn patch(srv: web::Data<UserService>, id: web::Path<uuid::Uuid>) -> im
     let id = id.into_inner();
     let user = srv.find_by_id(id).await?;
     if user.deleted_at.is_none() {
-        srv.soft_delete(id).await.map(controller::ok)
+        srv.remove(id).await.map(controller::ok)
     } else {
-        srv.undelete(id).await.map(controller::ok)
+        srv.restore(id).await.map(controller::ok)
     }
 }
 
 #[actix_web::delete("/{id}")]
 pub async fn delete(srv: web::Data<UserService>, id: web::Path<uuid::Uuid>) -> impl Responder {
     let id = id.into_inner();
-    srv.hard_delete(id).await.map(controller::no_content)
+    srv.delete(id).await.map(controller::no_content)
 }
 
 pub async fn soft_delete(srv: web::Data<UserService>, id: web::Path<uuid::Uuid>) -> impl Responder {
     let id = id.into_inner();
-    srv.soft_delete(id).await.map(controller::ok)
+    srv.remove(id).await.map(controller::ok)
 }
 
 pub async fn undelete(srv: web::Data<UserService>, id: web::Path<uuid::Uuid>) -> impl Responder {
     let id = id.into_inner();
-    srv.undelete(id).await.map(controller::ok)
+    srv.restore(id).await.map(controller::ok)
 }

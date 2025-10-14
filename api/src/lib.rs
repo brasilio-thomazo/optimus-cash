@@ -14,6 +14,7 @@ pub mod controller {
     mod controller;
     pub use controller::*;
     pub mod auth;
+    pub mod group;
     pub mod profile;
     pub mod user;
 }
@@ -31,8 +32,10 @@ pub mod http {
     mod server;
     pub mod request {
         mod auth_request;
+        mod group_request;
         mod user_request;
         pub use auth_request::*;
+        pub use group_request::*;
         pub use user_request::*;
     }
     pub mod response {
@@ -52,21 +55,32 @@ pub mod middleware {
 }
 
 pub mod model {
+    mod group;
+    mod model;
+    mod role;
     mod user;
+    pub use group::*;
+    pub use model::*;
+    pub use role::*;
     pub use user::*;
 }
 
 pub mod repository {
+    mod group_repository;
     mod repository;
     mod user_repository;
+    pub use group_repository::*;
+    pub use repository::*;
     pub use user_repository::*;
 }
 
 pub mod service {
     mod auth_service;
+    mod group_service;
     mod profile_service;
     mod user_service;
     pub use auth_service::*;
+    pub use group_service::*;
     pub use profile_service::*;
     pub use user_service::*;
 }

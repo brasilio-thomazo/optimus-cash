@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS
     users (
         id UUID PRIMARY KEY,
         "name" VARCHAR(120) NOT NULL,
-        phone VARCHAR(20) NOT NULL,
+        phone VARCHAR(20),
         email VARCHAR(255) NOT NULL,
         username VARCHAR(50) NOT NULL,
         "hash" VARCHAR(255) NOT NULL,
@@ -27,25 +27,3 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE INDEX idx_users_permissions ON users USING gin (permissions jsonb_path_ops);
-
-CREATE
-OR REPLACE FUNCTION update_user_permissions () RETURNS TRIGGER AS $$
-DECLARE group_id TEXT := NEW.id::text;
-DECLARE roles JSONB := NEW.roles;
-BEGIN
-    UPDATE users
-    SET permissions = (
-        SELECT jsonb_agg(
-            CASE WHEN obj ->> 'id' = group_id THEN jsonb_set(obj, '{roles}', roles) ELSE obj END
-        )
-        FROM jsonb_array_elements(permissions) obj
-    )
-    WHERE permissions @> jsonb_build_array(jsonb_build_object('id', group_id));
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_user_permissions
-AFTER
-UPDATE OF roles ON "groups" FOR EACH ROW
-EXECUTE PROCEDURE update_user_permissions ();

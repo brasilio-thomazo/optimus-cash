@@ -2,10 +2,11 @@ use actix_web::{HttpResponse, web};
 
 use crate::{
     controller, db,
-    service::{AuthService, ProfileService, UserService},
+    service::{AuthService, GroupService, ProfileService, UserService},
 };
 pub fn init(cfg: &mut web::ServiceConfig, pool: db::Pool) {
     cfg.service(health())
+        .service(groups(&pool))
         .service(users(&pool))
         .service(profile(&pool))
         .service(auth(&pool));
@@ -21,6 +22,13 @@ pub fn auth(pool: &db::Pool) -> actix_web::Scope {
     web::scope("/auth")
         .service(controller::auth::auth)
         .app_data(data)
+}
+
+pub fn groups(pool: &db::Pool) -> actix_web::Scope {
+    let service = web::Data::new(GroupService::new(pool));
+    web::scope("/groups")
+        .service(controller::group::index)
+        .app_data(service)
 }
 
 pub fn users(pool: &db::Pool) -> actix_web::Scope {

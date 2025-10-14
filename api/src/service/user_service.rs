@@ -1,4 +1,9 @@
-use crate::{app, db, http::request::UserRequest, model::User, repository::UserRepository};
+use crate::{
+    app, db,
+    http::request::UserRequest,
+    model::User,
+    repository::{Repository, UserRepository},
+};
 
 #[derive(Clone)]
 pub struct UserService {
@@ -15,7 +20,7 @@ impl UserService {
     pub async fn find_all(&self, page: Option<i32>) -> Result<Vec<User>, app::Error> {
         let page = page.unwrap_or(1);
         self.repo
-            .find_all(page)
+            .find_all_paginated(page)
             .await
             .map_err(app::Error::sqlx_error)
     }
@@ -49,21 +54,15 @@ impl UserService {
         Ok(data)
     }
 
-    pub async fn soft_delete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
-        self.repo
-            .soft_delete(id)
-            .await
-            .map_err(app::Error::sqlx_error)
+    pub async fn remove(&self, id: uuid::Uuid) -> Result<(), app::Error> {
+        self.repo.remove(id).await.map_err(app::Error::sqlx_error)
     }
 
-    pub async fn hard_delete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
-        self.repo
-            .hard_delete(id)
-            .await
-            .map_err(app::Error::sqlx_error)
+    pub async fn delete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
+        self.repo.delete(id).await.map_err(app::Error::sqlx_error)
     }
 
-    pub async fn undelete(&self, id: uuid::Uuid) -> Result<(), app::Error> {
-        self.repo.undelete(id).await.map_err(app::Error::sqlx_error)
+    pub async fn restore(&self, id: uuid::Uuid) -> Result<(), app::Error> {
+        self.repo.restore(id).await.map_err(app::Error::sqlx_error)
     }
 }

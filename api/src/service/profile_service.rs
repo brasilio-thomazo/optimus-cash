@@ -1,4 +1,8 @@
-use crate::{app, db, model::User, repository::UserRepository};
+use crate::{
+    app, db,
+    model::User,
+    repository::{Repository, UserRepository},
+};
 
 pub struct ProfileService {
     repo: UserRepository,
