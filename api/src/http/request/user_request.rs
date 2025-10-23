@@ -5,7 +5,7 @@ use crate::app;
 #[derive(Debug, Clone, Deserialize)]
 pub struct UserRequest {
     pub name: String,
-    pub phone: String,
+    pub phone: Option<String>,
     pub email: String,
     pub username: String,
     pub password: String,

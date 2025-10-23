@@ -6,7 +6,8 @@ pub async fn run(pool: db::Pool) -> Result<(), std::io::Error> {
     let server = actix_web::HttpServer::new(move || {
         let cors = actix_cors::Cors::default()
             .allowed_origin("http://localhost:5173")
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_origin("http://localhost:5025")
+            .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
             .allowed_headers(vec!["Content-Type", "Authorization"])
             .max_age(3600);
 
@@ -15,8 +16,8 @@ pub async fn run(pool: db::Pool) -> Result<(), std::io::Error> {
         actix_web::App::new()
             .app_data(data_pool)
             .configure(|cfg| http::routes::init(cfg, pool.clone()))
-            .wrap(cors)
             .wrap(middleware::JwtMiddleware)
+            .wrap(cors)
     });
     server.bind(("0.0.0.0", 4000))?.run().await
 }

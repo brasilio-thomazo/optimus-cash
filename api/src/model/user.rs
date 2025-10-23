@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub struct User {
     pub id: Uuid,
     pub name: String,
-    pub phone: String,
+    pub phone: Option<String>,
     pub email: String,
     pub username: String,
     #[serde(skip)]
